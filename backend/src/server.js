@@ -14,7 +14,7 @@ const PORT = process.env.PORT || 5001;
 app.use(express.json());
 app.use(cookieParser());
 app.use(cors({ origin: process.env.CLIENT_URL, credentials: true }));
-//punlic route
+//public route
 app.use("/api/auth", authRoute);
 
 //private route
