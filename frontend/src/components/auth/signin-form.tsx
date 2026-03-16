@@ -9,30 +9,35 @@ import { Card, CardContent } from "@/components/ui/card";
 //   FieldSeparator,
 // } from "@/components/ui/field";
 import { Input } from "@/components/ui/input";
-import { Label } from "./ui/label";
+import { Label } from "../ui/label";
 import { z } from "zod";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
-const signUpSchema = z.object({
-  firstname: z.string().min(1, "First name is required"),
-  lastname: z.string().min(1, "Last name is required"),
+import { useAuthStore } from "@/stores/useAuthStore";
+import { useNavigate } from "react-router";
+const signInSchema = z.object({
   username: z.string().min(3, "Username must have at least 3 characters"),
-  email: z.email("Invalid email"),
   password: z.string().min(6, "Password must have at least 6 characters"),
 });
-type SignUpFormValues = z.infer<typeof signUpSchema>;
-export function SignupForm({
+type SignInFormValues = z.infer<typeof signInSchema>;
+export function SigninForm({
   className,
   ...props
 }: React.ComponentProps<"div">) {
+  const { signIn } = useAuthStore();
+  const navigate = useNavigate();
   const {
     register,
     handleSubmit,
     formState: { errors, isSubmitting },
-  } = useForm<SignUpFormValues>({
-    resolver: zodResolver(signUpSchema),
+  } = useForm<SignInFormValues>({
+    resolver: zodResolver(signInSchema),
   });
-  const onSubmit = async (data: SignUpFormValues) => {};
+  const onSubmit = async (data: SignInFormValues) => {
+    const { username, password } = data;
+    await signIn(username, password);
+    navigate("/");
+  };
   return (
     <div className={cn("flex flex-col gap-6", className)} {...props}>
       <Card className="overflow-hidden p-0 border-border">
@@ -44,40 +49,12 @@ export function SignupForm({
                 <a href="/" className="mx-auto block w-fit text-center">
                   <img src="/logo.svg" alt="logo" />
                 </a>
-                <h1 className="text-2xl font-bold ">Create Moji Account</h1>
+                <h1 className="text-2xl font-bold ">Welcome to Moji</h1>
                 <p className="text-muted-foreground text-balance">
-                  Enter your email below to create your account
+                  Sign in to your Moji account
                 </p>
               </div>
-              {/* //firstname, lastname */}
-              <div className="grid grid-cols-2 gap-3 ">
-                <div className="space-y-2">
-                  <Label htmlFor="lastname" className="block text-sm">
-                    Last name
-                  </Label>
-                  <Input type="text" id="lastname" {...register("lastname")} />
-                  {errors.lastname && (
-                    <p className="text-destructive text-sm">
-                      {errors.lastname.message}
-                    </p>
-                  )}
-                </div>
-                <div className="space-y-2">
-                  <Label htmlFor="firstname" className="block text-sm">
-                    First name
-                  </Label>
-                  <Input
-                    type="text"
-                    id="firstname"
-                    {...register("firstname")}
-                  />
-                  {errors.firstname && (
-                    <p className="text-destructive text-sm">
-                      {errors.firstname.message}
-                    </p>
-                  )}
-                </div>
-              </div>
+
               {/* //username */}
               <div className="flex flex-col gap-3">
                 <div className="space-y-2">
@@ -97,25 +74,7 @@ export function SignupForm({
                   )}
                 </div>
               </div>
-              {/* email */}
-              <div className="flex flex-col gap-3">
-                <div className="space-y-2">
-                  <Label htmlFor="email" className="block text-sm">
-                    Email
-                  </Label>
-                  <Input
-                    type="text"
-                    id="email"
-                    placeholder="moji@gmail.com"
-                    {...register("email")}
-                  />
-                  {errors.email && (
-                    <p className="text-destructive text-sm">
-                      {errors.email.message}
-                    </p>
-                  )}
-                </div>
-              </div>
+
               {/* password */}
               <div className="flex flex-col gap-3">
                 <div className="space-y-2">
@@ -134,24 +93,24 @@ export function SignupForm({
                   )}
                 </div>
               </div>
-              {/* signup Button */}
+              {/* signin Button */}
               <Button type="submit" className="w-full" disabled={isSubmitting}>
-                Create Account
+                Sign in
               </Button>
               <div className="text-center text-sm">
-                Already have an account?{" "}
+                Don't have an account?{" "}
                 <a
-                  href="/signin"
+                  href="/signup"
                   className="underline underline-offset-4 hover:text-primary"
                 >
-                  Sign in
+                  Sign up
                 </a>
               </div>
             </div>
           </form>
           <div className="relative hidden bg-muted md:block">
             <img
-              src="/placeholderSignUp.png"
+              src="/placeholder.png"
               alt="Image"
               className="absolute top-1/2 -translate-y-1/2 object-cover "
             />
