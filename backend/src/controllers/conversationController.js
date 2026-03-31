@@ -1,3 +1,4 @@
+import { lstat } from "fs";
 import Conversation from "../models/Conversation.js";
 import Message from "../models/Message.js";
 export const createConversation = async (req, res) => {
@@ -11,11 +12,9 @@ export const createConversation = async (req, res) => {
       !Array.isArray(memberIds) ||
       memberIds.length === 0
     ) {
-      return res
-        .status(400)
-        .json({
-          message: "Group conversation require name and at least 1 member",
-        });
+      return res.status(400).json({
+        message: "Group conversation require name and at least 1 member",
+      });
     }
     let conversation;
     if (type === "direct") {
@@ -24,8 +23,43 @@ export const createConversation = async (req, res) => {
         type: "direct",
         "participants.userId": { $all: [userId, participantId] },
       });
+      if (!conversation) {
+        conversation = new Conversation({
+          type: "direct",
+          participants: [{ userId: userId }, { userId: participantId }],
+          lastMessageAt: new Date(),
+        });
+        await conversation.save();
+      }
     }
-  } catch (error) {}
+    if (type === "group") {
+      conversation = new Conversation({
+        type: "group",
+        participants: [
+          { userId: userId },
+          ...memberIds.map((id) => ({ userId: id })),
+        ],
+        group: {
+          name,
+          createdBy: userId,
+        },
+        lastMessageAt: new Date(),
+      });
+      await conversation.save();
+    }
+    if (!conversation) {
+      return res.status(400).json({ message: "Invalid conversation type" });
+    }
+    await conversation.populate([
+      { path: "participants.userId", select: "displayName avatarUrl" },
+      { path: "seenBy", select: "displayName avatarUrl" },
+      { path: "lastMessage.senderId", select: "displayName avatarUrl" },
+    ]);
+    return res.status(201).json({ conversation });
+  } catch (error) {
+    console.error("Error when creating conversation", error);
+    return res.status(500).json({ message: "Internal server error" });
+  }
 };
 export const getConversation = async (req, res) => {};
 export const getMessages = async (req, res) => {};
